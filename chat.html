@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Chatbot</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #090909;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 36px;
+            background: linear-gradient(to right, #4285F4, #EA4335);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        
+        .chat-container {
+    width: 90%; /* Increased width to 90% */
+    height: 90%; /* Increased height to 90% */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background-color: #121212;
+    border-radius: 15px;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+    box-shadow: 0 0 15px 5px rgba(209, 96, 44, 0.7); /* Added glow effect */
+}
+
+/* Optional: Hover effect for glow to intensify when the user hovers */
+.chat-container:hover {
+    box-shadow: 0 0 25px 10px rgb(208, 224, 224); /* More intense glow on hover */
+}
+
+/* Custom scrollbar */
+.chat-box::-webkit-scrollbar {
+    width: 6px; /* Reduced width of scrollbar */
+}
+
+.chat-box::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 5px;
+}
+
+/* Optional: Hover effect for the scrollbar */
+.chat-box::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+
+
+        .chat-box {
+            flex-grow: 1;
+            overflow-y: auto; /* Make the chat box scrollable */
+            padding: 10px;
+        }
+
+        .user-msg, .bot-msg {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            width: fit-content;
+            max-width: 75%;
+            word-wrap: break-word;
+        }
+
+        .user-msg {
+            margin-left: auto;
+        }
+
+        .bot-msg {
+            margin-right: auto;
+        }
+
+        .user-msg img,
+        .bot-msg img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 10px;
+        }
+
+        .chat-input {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #121212;
+            padding: 10px;
+            border-radius: 30px;
+            border: 1px solid #444;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            background: #1a1a1a;
+            color: #fff;
+            outline: none;
+        }
+
+        .chat-input button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            background: #6200ea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .chat-input button:hover {
+            background: #3700b3;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <h1>Welcome to the Medic Bot</h1>
+
+        <div class="chat-box" id="chatbox">
+            <!-- Messages will be appended here -->
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Ask about symptoms or diseases..." />
+            <button onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to append user and bot messages to the chat window
+        function appendMessage(message, sender) {
+            const chatbox = document.getElementById('chatbox');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add(sender === 'user' ? 'user-msg' : 'bot-msg');
+
+            // Add images for user and bot
+            const userImage = sender === 'user' ? "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png" : "https://cdn0.iconfinder.com/data/icons/avatar-2-3/450/23_avatar__woman_user-512.png";
+            const imageElement = document.createElement('img');
+            imageElement.src = userImage;
+
+            messageElement.appendChild(imageElement);
+            messageElement.appendChild(document.createTextNode(message));
+
+            chatbox.appendChild(messageElement);
+            chatbox.scrollTop = chatbox.scrollHeight;  // Keep the scroll at the bottom when new message is added
+        }
+
+        // Function to handle user input and simulate bot response
+        async function sendMessage() {
+            let userInput = document.getElementById("user-input").value.trim();
+            if (userInput === "") return;
+
+            // Append user message to chatbox
+            appendMessage(userInput, 'user');
+
+            // Clear the input field
+            document.getElementById("user-input").value = "";
+
+            // Simulate sending a message to the backend (you can replace with actual backend call)
+            try {
+                let response = await fetch("http://localhost:5000/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: userInput }),
+                });
+
+                let data = await response.json();
+                let botMessage = data.response || "Sorry, something went wrong.";
+                // Append bot message to chatbox
+                appendMessage(botMessage, 'bot');
+            } catch (error) {
+                console.error("Error fetching response:", error);
+                appendMessage("Error: Could not get a response from the server.", 'bot');
+            }
+        }
+
+        // Handle Enter key press to send the message
+        document.getElementById("user-input").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+
+</body>
+</html>
