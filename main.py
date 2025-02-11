@@ -2,7 +2,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import CORS
 import google.generativeai as genai
 import random
+from dotenv import load_dotenv
+import os
 
+# Load environment variables from .env file
+load_dotenv()
+
+# Access the key
+apikey = os.getenv("API_KEY")
 # Flask setup
 app = Flask(__name__)
 
@@ -10,7 +17,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure Gemini API
-genai.configure(api_key="AIzaSyAUc09UP4OEnZ1cTDUZYHx-bqq2ahaxgsM")
+genai.configure(api_key=apikey)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 # Initialize Q-table
@@ -42,7 +49,7 @@ def update_q_table(query, response, reward):
     old_value = Q_table[query][response]
     max_future_q = max(Q_table[query].values(), default=0)  # Best future reward
     new_q_value = old_value + alpha * (reward + gamma * max_future_q - old_value)
-    
+
     Q_table[query][response] = new_q_value  # Update Q-value
 
 
@@ -51,6 +58,7 @@ def chat():
     """API endpoint to interact with the chatbot."""
     data = request.json
     query = data.get('query', '').strip()
+    reward = data.get('reward', 0)  # Getting the feedback (reward) from the frontend
 
     if query.lower() == "exit":
         return jsonify({'response': 'Goodbye!'})
@@ -62,11 +70,10 @@ def chat():
         response = best_response
     else:
         # Generate a new response using Gemini API
-        full_query = query + " Give this as a short manner of its possible disease symptoms and remedies."
+        full_query = query + " Give this as a short manner of its possible disease symptoms and remedies in para tag format."
         response = model.generate_content(full_query).text
 
-    # Capture user feedback (for now, you can simulate this or remove it for the frontend)
-    reward = 0  # Assuming a neutral response for now
+    # Update the Q-table with the reward received (feedback)
     update_q_table(query, response, reward)
 
     return jsonify({'response': response})
